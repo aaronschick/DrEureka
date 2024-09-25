@@ -1,6 +1,6 @@
-import isaacgym
+import isaaclab
 
-assert isaacgym
+assert isaaclab
 import torch
 import numpy as np
 import argparse

@@ -1,7 +1,7 @@
 from .terrain import Terrain
 from globe_walking.go1_gym.utils.terrain import perlin
 
-from isaacgym import gymapi
+from isaaclab import labapi
 import numpy as np
 import torch
 import os
@@ -14,7 +14,7 @@ class BoxTerrain(Terrain):
     def prepare(self):
         """ Adds a box terrain to the simulation, sets parameters based on the cfg.
         # """
-        from isaacgym import terrain_utils
+        from isaaclab import terrain_utils
 
         self.terrain_cell_bounds = {
             "x_min": torch.zeros(self.env.cfg.terrain.num_rows, self.env.cfg.terrain.num_cols, device=self.env.device),
@@ -86,7 +86,7 @@ class BoxTerrain(Terrain):
                 horizontal_scale = self.env.cfg.terrain.horizontal_scale  # / self.env.cfg.terrain.num_rows
                 vertical_scale = self.env.cfg.terrain.vertical_scale  # / self.env.cfg.terrain.num_cols
 
-                tm_params = gymapi.TriangleMeshParams()
+                tm_params = labapi.TriangleMeshParams()
                 vertices, triangles = terrain_utils.convert_heightfield_to_trimesh(heightfield_segment_raw,
                                                                                    horizontal_scale,
                                                                                    vertical_scale,
@@ -271,25 +271,25 @@ class BoxTerrain(Terrain):
     def initialize(self):
         """ Adds a box terrain to the simulation, sets parameters based on the cfg.
         # """
-        from isaacgym import terrain_utils
+        from isaaclab import terrain_utils
 
-        options = gymapi.AssetOptions()
+        options = labapi.AssetOptions()
         options.fix_base_link = True
         options.armature = 0.01
         options.density = 1000
         options.use_mesh_materials = True
-        options.mesh_normal_mode = gymapi.COMPUTE_PER_VERTEX
+        options.mesh_normal_mode = labapi.COMPUTE_PER_VERTEX
         options.override_com = True
         options.override_inertia = True
         options.vhacd_enabled = True
-        options.vhacd_params = gymapi.VhacdParams()
+        options.vhacd_params = labapi.VhacdParams()
         options.vhacd_params.resolution = 3000000
         options.vhacd_params.max_num_vertices_per_ch = 1024
         options.vhacd_params.max_convex_hulls = 64
         options.vhacd_params.concavity = 0.0
 
-        env_lower = gymapi.Vec3(0., 0., 0.)
-        env_upper = gymapi.Vec3(0., 0., 0.)
+        env_lower = labapi.Vec3(0., 0., 0.)
+        env_upper = labapi.Vec3(0., 0., 0.)
         env = self.env.envs[0]  # self.gym.create_env(self.sim, env_lower, env_upper, 1)
 
         collision_group = -1
@@ -323,9 +323,9 @@ class BoxTerrain(Terrain):
                 self.terrain_cell_bounds["x_max"][i, j] = (i + 1) * self.env.terrain.cfg.env_width
                 self.terrain_cell_bounds["y_max"][i, j] = (j + 1) * self.env.terrain.cfg.env_length
 
-                pose = gymapi.Transform()
-                pose.r = gymapi.Quat(0, 0, 0, 1)
-                pose.p = gymapi.Vec3(terrain_px, terrain_py,
+                pose = labapi.Transform()
+                pose.r = labapi.Quat(0, 0, 0, 1)
+                pose.p = labapi.Vec3(terrain_px, terrain_py,
                                      -self.env.terrain.cfg.env_width * 0.05 / 2 + self.terrain_cell_heights[i, j])  # , -self.base_depth / 2)
 
                 props = self.env.gym.get_asset_rigid_shape_properties(self.base_asset)
@@ -336,12 +336,12 @@ class BoxTerrain(Terrain):
 
                 self.env.terrain_actors[i, j] = self.env.gym.create_actor(env, self.base_asset, pose, None, collision_group, collision_filter)
                 self.env.gym.set_actor_scale(env, self.env.terrain_actors[i, j], self.env.terrain.cfg.env_width)
-                # self.gym.set_rigid_body_color(env, base_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION,
-                #                          gymapi.Vec3(1, 1, 1))
+                # self.gym.set_rigid_body_color(env, base_handle, 0, labapi.MESH_VISUAL_AND_COLLISION,
+                #                          labapi.Vec3(1, 1, 1))
                 # print(len(textures), segmentation_id, segmentation_id // (255 // len(texture_files) + len(texture_files)))
                 texture_idx = segmentation_id // (255 // len(texture_files) + len(texture_files))
                 texture = textures[texture_idx % len(textures)]
-                self.env.gym.set_rigid_body_texture(env, self.env.terrain_actors[i, j], 0, gymapi.MeshType.MESH_VISUAL, texture)
+                self.env.gym.set_rigid_body_texture(env, self.env.terrain_actors[i, j], 0, labapi.MeshType.MESH_VISUAL, texture)
 
         lengthwise_density = int(self.env.cfg.terrain.terrain_length / self.env.cfg.terrain.horizontal_scale)
         widthwise_density = int(self.env.cfg.terrain.terrain_width / self.env.cfg.terrain.horizontal_scale)

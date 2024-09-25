@@ -5,8 +5,8 @@ def train_mc(iterations, command_config, reward_config, dr_config, eureka_target
 
     import os
     import shutil
-    import isaacgym
-    assert isaacgym
+    import isaaclab
+    assert isaaclab
     import wandb
     from ml_logger import logger
 

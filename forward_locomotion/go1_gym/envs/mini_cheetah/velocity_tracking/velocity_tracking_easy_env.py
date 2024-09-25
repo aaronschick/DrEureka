@@ -1,4 +1,4 @@
-from isaacgym import gymutil, gymapi
+from isaaclab import gymutil, labapi
 import torch
 from params_proto.neo_proto import Meta
 from typing import Union
@@ -34,7 +34,7 @@ class VelocityTrackingEasyEnv(LeggedRobot):
             cfg.commands.ranges.heading = [0, 0]
             cfg.commands.heading_command = False
 
-        sim_params = gymapi.SimParams()
+        sim_params = labapi.SimParams()
         gymutil.parse_sim_config(vars(cfg.sim), sim_params)
         super().__init__(cfg, sim_params, physics_engine, sim_device, headless, eval_cfg, initial_dynamics_dict)
 

@@ -2,8 +2,8 @@
 import os
 from typing import Dict
 
-from isaacgym import gymtorch, gymapi, gymutil
-from isaacgym.torch_utils import *
+from isaaclab import gymtorch, labapi, gymutil
+from isaaclab.torch_utils import *
 
 assert gymtorch
 import torch
@@ -24,8 +24,8 @@ class LeggedRobot(BaseTask):
 
         Args:
             cfg (Dict): Environment config file
-            sim_params (gymapi.SimParams): simulation parameters
-            physics_engine (gymapi.SimType): gymapi.SIM_PHYSX (must be PhysX)
+            sim_params (labapi.SimParams): simulation parameters
+            physics_engine (labapi.SimType): labapi.SIM_PHYSX (must be PhysX)
             device_type (string): 'cuda' or 'cpu'
             device_id (int): 0, 1, ...
             headless (bool): Run without rendering if True
@@ -86,7 +86,7 @@ class LeggedRobot(BaseTask):
             self.forces[:, self.num_bodies, :2] = -self.ball_drags * torch.square(self.object_lin_vel[:, :2]) * torch.sign(self.object_lin_vel[:, :2])
             
             self.gym.set_dof_actuation_force_tensor(self.sim, gymtorch.unwrap_tensor(self.torques))
-            self.gym.apply_rigid_body_force_tensors(self.sim, gymtorch.unwrap_tensor(self.forces), None, gymapi.GLOBAL_SPACE)
+            self.gym.apply_rigid_body_force_tensors(self.sim, gymtorch.unwrap_tensor(self.forces), None, labapi.GLOBAL_SPACE)
             self.gym.simulate(self.sim)
             self.gym.fetch_results(self.sim, True)
             self.gym.refresh_dof_state_tensor(self.sim)
@@ -393,7 +393,7 @@ class LeggedRobot(BaseTask):
         sim_params = self.gym.get_sim_params(self.sim)
         gravity = self.gravities[0, :] + torch.Tensor([0, 0, -9.8]).to(self.device)
         self.gravity_vec[:, :] = gravity.unsqueeze(0) / torch.norm(gravity)
-        sim_params.gravity = gymapi.Vec3(gravity[0], gravity[1], gravity[2])
+        sim_params.gravity = labapi.Vec3(gravity[0], gravity[1], gravity[2])
         self.gym.set_sim_params(self.sim, sim_params)
         
     def _randomize_ball_drag(self):
@@ -414,11 +414,11 @@ class LeggedRobot(BaseTask):
             Base behavior: randomizes the friction of each environment
 
         Args:
-            props (List[gymapi.RigidShapeProperties]): Properties of each shape of the asset
+            props (List[labapi.RigidShapeProperties]): Properties of each shape of the asset
             env_id (int): Environment id
 
         Returns:
-            [List[gymapi.RigidShapeProperties]]: Modified rigid shape properties
+            [List[labapi.RigidShapeProperties]]: Modified rigid shape properties
         """
         for s in range(len(props)):
             props[s].friction = self.robot_friction_coeffs[env_id, 0]
@@ -432,11 +432,11 @@ class LeggedRobot(BaseTask):
             Base behavior: randomizes the friction of each environment
 
         Args:
-            props (List[gymapi.RigidShapeProperties]): Properties of each shape of the asset
+            props (List[labapi.RigidShapeProperties]): Properties of each shape of the asset
             env_id (int): Environment id
 
         Returns:
-            [List[gymapi.RigidShapeProperties]]: Modified rigid shape properties
+            [List[labapi.RigidShapeProperties]]: Modified rigid shape properties
         """
         for s in range(len(props)):
             props[s].friction = self.ball_friction_coeffs[env_id]
@@ -560,7 +560,7 @@ class LeggedRobot(BaseTask):
         self.default_body_mass = props[0].mass
 
         props[0].mass = self.default_body_mass + self.payloads[env_id]
-        props[0].com = gymapi.Vec3(self.com_displacements[env_id, 0], self.com_displacements[env_id, 1],
+        props[0].com = labapi.Vec3(self.com_displacements[env_id, 0], self.com_displacements[env_id, 1],
                                    self.com_displacements[env_id, 2])
         return props
 
@@ -1419,8 +1419,8 @@ class LeggedRobot(BaseTask):
 
         
 
-        self.ball_init_pose = gymapi.Transform()
-        self.ball_init_pose.p = gymapi.Vec3(*self.object_init_state[:3])
+        self.ball_init_pose = labapi.Transform()
+        self.ball_init_pose.p = labapi.Vec3(*self.object_init_state[:3])
 
         # save body names from the asset
         body_names = self.gym.get_asset_rigid_body_names(self.robot_asset)
@@ -1437,16 +1437,16 @@ class LeggedRobot(BaseTask):
 
         base_init_state_list = self.cfg.init_state.pos + self.cfg.init_state.rot + self.cfg.init_state.lin_vel + self.cfg.init_state.ang_vel
         self.base_init_state = to_torch(base_init_state_list, device=self.device, requires_grad=False)
-        start_pose = gymapi.Transform()
-        start_pose.p = gymapi.Vec3(*self.base_init_state[:3])
+        start_pose = labapi.Transform()
+        start_pose.p = labapi.Vec3(*self.base_init_state[:3])
 
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
         self.terrain_levels = torch.zeros(self.num_envs, device=self.device, requires_grad=False, dtype=torch.long)
         self.terrain_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
         self.terrain_types = torch.zeros(self.num_envs, device=self.device, requires_grad=False, dtype=torch.long)
         self._get_env_origins(torch.arange(self.num_envs, device=self.device), self.cfg)
-        env_lower = gymapi.Vec3(0., 0., 0.)
-        env_upper = gymapi.Vec3(0., 0., 0.)
+        env_lower = labapi.Vec3(0., 0., 0.)
+        env_upper = labapi.Vec3(0., 0., 0.)
         self.robot_actor_handles = []
         self.object_actor_handles = []
         self.imu_sensor_handles = []
@@ -1472,7 +1472,7 @@ class LeggedRobot(BaseTask):
                                          device=self.device).squeeze(1)
             pos[1:2] += torch_rand_float(-self.cfg.terrain.y_init_range, self.cfg.terrain.y_init_range, (1, 1),
                                          device=self.device).squeeze(1)
-            start_pose.p = gymapi.Vec3(*pos)
+            start_pose.p = labapi.Vec3(*pos)
 
             # add robots
             rigid_shape_props = self._process_rigid_shape_props(rigid_shape_props_asset, i)
@@ -1488,22 +1488,22 @@ class LeggedRobot(BaseTask):
             self.gym.set_actor_rigid_body_properties(env_handle, robot_handle, body_props, recomputeInertia=True)
             
             self.robot_actor_handles.append(robot_handle)
-            self.robot_actor_idxs.append(self.gym.get_actor_index(env_handle, robot_handle, gymapi.DOMAIN_SIM))
+            self.robot_actor_idxs.append(self.gym.get_actor_index(env_handle, robot_handle, labapi.DOMAIN_SIM))
 
             # add objects
             ball_rigid_shape_props = self._process_ball_rigid_shape_props(ball_rigid_shape_props_asset, i)
             self.gym.set_asset_rigid_shape_properties(self.ball_asset, ball_rigid_shape_props)
             ball_handle = self.gym.create_actor(env_handle, self.ball_asset, self.ball_init_pose, "ball", i, 0)
-            color = gymapi.Vec3(0.25, 0.5, 1)
-            self.gym.set_rigid_body_color(env_handle, ball_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
-            ball_idx = self.gym.get_actor_rigid_body_index(env_handle, ball_handle, 0, gymapi.DOMAIN_SIM)
+            color = labapi.Vec3(0.25, 0.5, 1)
+            self.gym.set_rigid_body_color(env_handle, ball_handle, 0, labapi.MESH_VISUAL_AND_COLLISION, color)
+            ball_idx = self.gym.get_actor_rigid_body_index(env_handle, ball_handle, 0, labapi.DOMAIN_SIM)
             self.gym.set_actor_scale(env_handle, ball_handle, self.ball_radius[i] / self.default_ball_radius)
             ball_body_props = self.gym.get_actor_rigid_body_properties(env_handle, ball_handle)
             ball_body_props = self._process_ball_rigid_body_props(ball_body_props, i)
             self.gym.set_actor_rigid_body_properties(env_handle, ball_handle, ball_body_props, recomputeInertia=True)
             self.object_actor_handles.append(ball_handle)
             self.object_rigid_body_idxs.append(ball_idx)
-            self.object_actor_idxs.append(self.gym.get_actor_index(env_handle, ball_handle, gymapi.DOMAIN_SIM))
+            self.object_actor_idxs.append(self.gym.get_actor_index(env_handle, ball_handle, labapi.DOMAIN_SIM))
                 
 
             self.envs.append(env_handle)
@@ -1710,23 +1710,23 @@ class LeggedRobot(BaseTask):
         
     def set_lighting(self):
         light_index = 0
-        intensity = gymapi.Vec3(0.5, 0.5, 0.5)
-        ambient = gymapi.Vec3(0.2, 0.2, 0.2)
-        direction = gymapi.Vec3(0.01, 0.01, 1.0)
+        intensity = labapi.Vec3(0.5, 0.5, 0.5)
+        ambient = labapi.Vec3(0.2, 0.2, 0.2)
+        direction = labapi.Vec3(0.01, 0.01, 1.0)
         self.gym.set_light_parameters(self.sim, light_index, intensity, ambient, direction)
 
     def set_camera(self, position, lookat):
         """ Set camera position and direction
         """
         if position is not None and lookat is not None:
-            cam_pos = gymapi.Vec3(position[0], position[1], position[2])
-            cam_target = gymapi.Vec3(lookat[0], lookat[1], lookat[2])
+            cam_pos = labapi.Vec3(position[0], position[1], position[2])
+            cam_target = labapi.Vec3(lookat[0], lookat[1], lookat[2])
             self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
         else:
             bx, by, bz = self.root_states[self.robot_actor_idxs[0], 0], self.root_states[self.robot_actor_idxs[0], 1], self.root_states[self.robot_actor_idxs[0], 2]
             target_loc = [bx, by, bz]
             cam_distance = [2.0, -2.0, 2.0]
 
-            cam_pos = gymapi.Vec3(target_loc[0] + cam_distance[0], target_loc[1] + cam_distance[1], target_loc[2] + cam_distance[2])
-            cam_target = gymapi.Vec3(target_loc[0], target_loc[1], target_loc[2])
+            cam_pos = labapi.Vec3(target_loc[0] + cam_distance[0], target_loc[1] + cam_distance[1], target_loc[2] + cam_distance[2])
+            cam_target = labapi.Vec3(target_loc[0], target_loc[1], target_loc[2])
             self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)

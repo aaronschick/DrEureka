@@ -4,8 +4,8 @@ import argparse
 
 def train_go1(iterations, dr_config, headless=True, resume_path=None, no_wandb=False, wandb_group=None):
 
-    import isaacgym
-    assert isaacgym
+    import isaaclab
+    assert isaaclab
     import torch
 
     from globe_walking.go1_gym.envs.base.legged_robot_config import Cfg

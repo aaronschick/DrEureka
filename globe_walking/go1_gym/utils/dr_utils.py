@@ -31,7 +31,7 @@
 
 import numpy as np
 from bisect import bisect
-from isaacgym import gymapi
+from isaaclab import labapi
 
 
 NUM_BATCHES = {
@@ -192,7 +192,7 @@ def apply_random_samples(prop, og_prop, attr, attr_randomization_params,
 
     """
 
-    if isinstance(prop, gymapi.SimParams):
+    if isinstance(prop, labapi.SimParams):
         
         if attr == 'gravity':
             

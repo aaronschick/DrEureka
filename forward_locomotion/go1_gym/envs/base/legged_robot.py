@@ -2,8 +2,8 @@
 import os
 from typing import Dict
 
-from isaacgym import gymtorch, gymapi, gymutil
-from isaacgym.torch_utils import *
+from isaaclab import gymtorch, labapi, gymutil
+from isaaclab.torch_utils import *
 
 assert gymtorch
 import torch
@@ -24,8 +24,8 @@ class LeggedRobot(BaseTask):
 
         Args:
             cfg (Dict): Environment config file
-            sim_params (gymapi.SimParams): simulation parameters
-            physics_engine (gymapi.SimType): gymapi.SIM_PHYSX (must be PhysX)
+            sim_params (labapi.SimParams): simulation parameters
+            physics_engine (labapi.SimType): labapi.SIM_PHYSX (must be PhysX)
             device_type (string): 'cuda' or 'cpu'
             device_id (int): 0, 1, ...
             headless (bool): Run without rendering if True
@@ -455,8 +455,8 @@ class LeggedRobot(BaseTask):
     def set_camera(self, position, lookat):
         """ Set camera position and direction
         """
-        cam_pos = gymapi.Vec3(position[0], position[1], position[2])
-        cam_target = gymapi.Vec3(lookat[0], lookat[1], lookat[2])
+        cam_pos = labapi.Vec3(position[0], position[1], position[2])
+        cam_target = labapi.Vec3(lookat[0], lookat[1], lookat[2])
         self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target) \
 
     def set_main_agent_pose(self, loc, quat):
@@ -493,7 +493,7 @@ class LeggedRobot(BaseTask):
         sim_params = self.gym.get_sim_params(self.sim)
         gravity = self.gravities[0, :] + torch.Tensor([0, 0, -9.8]).to(self.device)
         self.gravity_vec[:, :] = gravity.unsqueeze(0) / torch.norm(gravity)
-        sim_params.gravity = gymapi.Vec3(gravity[0], gravity[1], gravity[2])
+        sim_params.gravity = labapi.Vec3(gravity[0], gravity[1], gravity[2])
         self.gym.set_sim_params(self.sim, sim_params)
 
     def _process_rigid_shape_props(self, props, env_id):
@@ -502,11 +502,11 @@ class LeggedRobot(BaseTask):
             Base behavior: randomizes the friction of each environment
 
         Args:
-            props (List[gymapi.RigidShapeProperties]): Properties of each shape of the asset
+            props (List[labapi.RigidShapeProperties]): Properties of each shape of the asset
             env_id (int): Environment id
 
         Returns:
-            [List[gymapi.RigidShapeProperties]]: Modified rigid shape properties
+            [List[labapi.RigidShapeProperties]]: Modified rigid shape properties
         """
         for s in range(len(props)):
             props[s].friction = self.friction_coeffs[env_id]
@@ -635,7 +635,7 @@ class LeggedRobot(BaseTask):
         self.default_body_mass = props[0].mass
 
         props[0].mass = self.default_body_mass + self.payloads[env_id]
-        props[0].com = gymapi.Vec3(self.com_displacements[env_id, 0], self.com_displacements[env_id, 1],
+        props[0].com = labapi.Vec3(self.com_displacements[env_id, 0], self.com_displacements[env_id, 1],
                                    self.com_displacements[env_id, 2])
         return props
 
@@ -1188,8 +1188,8 @@ class LeggedRobot(BaseTask):
     def _create_ground_plane(self):
         """ Adds a ground plane to the simulation, sets friction and restitution based on the cfg.
         """
-        plane_params = gymapi.PlaneParams()
-        plane_params.normal = gymapi.Vec3(0.0, 0.0, 1.0)
+        plane_params = labapi.PlaneParams()
+        plane_params.normal = labapi.Vec3(0.0, 0.0, 1.0)
         plane_params.static_friction = self.cfg.terrain.static_friction
         plane_params.dynamic_friction = self.cfg.terrain.dynamic_friction
         plane_params.restitution = self.cfg.terrain.restitution
@@ -1198,7 +1198,7 @@ class LeggedRobot(BaseTask):
     def _create_heightfield(self):
         """ Adds a heightfield terrain to the simulation, sets parameters based on the cfg.
         """
-        hf_params = gymapi.HeightFieldParams()
+        hf_params = labapi.HeightFieldParams()
         hf_params.column_scale = self.terrain.cfg.horizontal_scale
         hf_params.row_scale = self.terrain.cfg.horizontal_scale
         hf_params.vertical_scale = self.terrain.cfg.vertical_scale
@@ -1220,7 +1220,7 @@ class LeggedRobot(BaseTask):
     def _create_trimesh(self):
         """ Adds a triangle mesh terrain to the simulation, sets parameters based on the cfg.
         # """
-        tm_params = gymapi.TriangleMeshParams()
+        tm_params = labapi.TriangleMeshParams()
         tm_params.nb_vertices = self.terrain.vertices.shape[0]
         tm_params.nb_triangles = self.terrain.triangles.shape[0]
 
@@ -1248,7 +1248,7 @@ class LeggedRobot(BaseTask):
         asset_root = os.path.dirname(asset_path)
         asset_file = os.path.basename(asset_path)
 
-        asset_options = gymapi.AssetOptions()
+        asset_options = labapi.AssetOptions()
         asset_options.default_dof_drive_mode = self.cfg.asset.default_dof_drive_mode
         asset_options.collapse_fixed_joints = self.cfg.asset.collapse_fixed_joints
         asset_options.replace_cylinder_with_capsule = self.cfg.asset.replace_cylinder_with_capsule
@@ -1284,16 +1284,16 @@ class LeggedRobot(BaseTask):
 
         base_init_state_list = self.cfg.init_state.pos + self.cfg.init_state.rot + self.cfg.init_state.lin_vel + self.cfg.init_state.ang_vel
         self.base_init_state = to_torch(base_init_state_list, device=self.device, requires_grad=False)
-        start_pose = gymapi.Transform()
-        start_pose.p = gymapi.Vec3(*self.base_init_state[:3])
+        start_pose = labapi.Transform()
+        start_pose.p = labapi.Vec3(*self.base_init_state[:3])
 
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
         self.terrain_levels = torch.zeros(self.num_envs, device=self.device, requires_grad=False, dtype=torch.long)
         self.terrain_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
         self.terrain_types = torch.zeros(self.num_envs, device=self.device, requires_grad=False, dtype=torch.long)
         self._call_train_eval(self._get_env_origins, torch.arange(self.num_envs, device=self.device))
-        env_lower = gymapi.Vec3(0., 0., 0.)
-        env_upper = gymapi.Vec3(0., 0., 0.)
+        env_lower = labapi.Vec3(0., 0., 0.)
+        env_upper = labapi.Vec3(0., 0., 0.)
         self.actor_handles = []
         self.imu_sensor_handles = []
         self.envs = []
@@ -1326,7 +1326,7 @@ class LeggedRobot(BaseTask):
             pos = self.env_origins[i].clone()
             pos[:2] += torch_rand_float(self.cfg.terrain.x_init_range, self.cfg.terrain.y_init_range, (2, 1),
                                         device=self.device).squeeze(1)
-            start_pose.p = gymapi.Vec3(*pos)
+            start_pose.p = labapi.Vec3(*pos)
 
             rigid_shape_props = self._process_rigid_shape_props(rigid_shape_props_asset, i)
             self.gym.set_asset_rigid_shape_properties(self.robot_asset, rigid_shape_props)
@@ -1360,18 +1360,18 @@ class LeggedRobot(BaseTask):
                                                                                         termination_contact_names[i])
         # if recording video, set up camera
         if self.cfg.env.record_video:
-            self.camera_props = gymapi.CameraProperties()
+            self.camera_props = labapi.CameraProperties()
             self.camera_props.width = 360
             self.camera_props.height = 240
             self.rendering_camera = self.gym.create_camera_sensor(self.envs[0], self.camera_props)
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(1.5, 1, 3.0),
-                                         gymapi.Vec3(0, 0, 0))
+            self.gym.set_camera_location(self.rendering_camera, self.envs[0], labapi.Vec3(1.5, 1, 3.0),
+                                         labapi.Vec3(0, 0, 0))
             if self.eval_cfg is not None:
                 self.rendering_camera_eval = self.gym.create_camera_sensor(self.envs[self.num_train_envs],
                                                                            self.camera_props)
                 self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(1.5, 1, 3.0),
-                                             gymapi.Vec3(0, 0, 0))
+                                             labapi.Vec3(1.5, 1, 3.0),
+                                             labapi.Vec3(0, 0, 0))
         self.video_writer = None
         self.video_frames = []
         self.video_frames_eval = []
@@ -1381,21 +1381,21 @@ class LeggedRobot(BaseTask):
     def render(self, mode="rgb_array"):
         assert mode == "rgb_array"
         bx, by, bz = self.root_states[0, 0], self.root_states[0, 1], self.root_states[0, 2]
-        self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                     gymapi.Vec3(bx, by, bz))
+        self.gym.set_camera_location(self.rendering_camera, self.envs[0], labapi.Vec3(bx, by - 1.0, bz + 1.0),
+                                     labapi.Vec3(bx, by, bz))
         self.gym.step_graphics(self.sim)
         self.gym.render_all_camera_sensors(self.sim)
-        img = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera, gymapi.IMAGE_COLOR)
+        img = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera, labapi.IMAGE_COLOR)
         w, h = img.shape
         return img.reshape([w, h // 4, 4])
 
     def _render_headless(self):
         if self.record_now and self.complete_video_frames is not None and len(self.complete_video_frames) == 0:
             bx, by, bz = self.root_states[0, 0], self.root_states[0, 1], self.root_states[0, 2]
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                         gymapi.Vec3(bx, by, bz))
+            self.gym.set_camera_location(self.rendering_camera, self.envs[0], labapi.Vec3(bx, by - 1.0, bz + 1.0),
+                                         labapi.Vec3(bx, by, bz))
             self.video_frame = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera,
-                                                         gymapi.IMAGE_COLOR)
+                                                         labapi.IMAGE_COLOR)
             self.video_frame = self.video_frame.reshape((self.camera_props.height, self.camera_props.width, 4))
             self.video_frames.append(self.video_frame)
 
@@ -1405,11 +1405,11 @@ class LeggedRobot(BaseTask):
                 bx, by, bz = self.root_states[self.num_train_envs, 0], self.root_states[self.num_train_envs, 1], \
                              self.root_states[self.num_train_envs, 2]
                 self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                             gymapi.Vec3(bx, by, bz))
+                                             labapi.Vec3(bx, by - 1.0, bz + 1.0),
+                                             labapi.Vec3(bx, by, bz))
                 self.video_frame_eval = self.gym.get_camera_image(self.sim, self.envs[self.num_train_envs],
                                                                   self.rendering_camera_eval,
-                                                                  gymapi.IMAGE_COLOR)
+                                                                  labapi.IMAGE_COLOR)
                 self.video_frame_eval = self.video_frame_eval.reshape(
                     (self.camera_props.height, self.camera_props.width, 4))
                 self.video_frames_eval.append(self.video_frame_eval)
@@ -1507,7 +1507,7 @@ class LeggedRobot(BaseTask):
                 x = height_points[j, 0] + base_pos[0]
                 y = height_points[j, 1] + base_pos[1]
                 z = heights[j]
-                sphere_pose = gymapi.Transform(gymapi.Vec3(x, y, z), r=None)
+                sphere_pose = labapi.Transform(labapi.Vec3(x, y, z), r=None)
                 gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[i], sphere_pose)
 
     def _init_height_points(self, env_ids, cfg):

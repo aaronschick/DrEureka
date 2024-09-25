@@ -2,7 +2,7 @@
 import math
 
 import numpy as np
-from isaacgym import terrain_utils
+from isaaclab import terrain_utils
 from numpy.random import choice
 
 from forward_locomotion.go1_gym.envs.base.legged_robot_config import Cfg

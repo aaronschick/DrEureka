@@ -3,7 +3,7 @@ import sys
 
 import gym
 import torch
-from isaacgym import gymapi, gymutil
+from isaaclab import labaoi, gymutil
 
 from gym import spaces
 import numpy as np
@@ -13,10 +13,10 @@ import numpy as np
 class BaseTask(gym.Env):
 
     def __init__(self, cfg, sim_params, physics_engine, sim_device, headless, eval_cfg=None):
-        self.gym = gymapi.acquire_gym()
+        self.gym = labapi.acquire_gym()
 
         if isinstance(physics_engine, str) and physics_engine == "SIM_PHYSX":
-            physics_engine = gymapi.SIM_PHYSX
+            physics_engine = labapi.SIM_PHYSX
 
         self.sim_params = sim_params
         self.physics_engine = physics_engine
@@ -79,11 +79,11 @@ class BaseTask(gym.Env):
         if self.headless == False:
             # subscribe to keyboard shortcuts
             self.viewer = self.gym.create_viewer(
-                self.sim, gymapi.CameraProperties())
+                self.sim, labapi.CameraProperties())
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_ESCAPE, "QUIT")
+                self.viewer, labapi.KEY_ESCAPE, "QUIT")
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_V, "toggle_viewer_sync")
+                self.viewer, labapi.KEY_V, "toggle_viewer_sync")
 
     def get_observations(self):
         return self.obs_buf

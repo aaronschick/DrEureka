@@ -1,6 +1,6 @@
 from .sensor import Sensor
-from isaacgym import gymapi
-from isaacgym.torch_utils import *
+from isaaclab import labapi
+from isaaclab.torch_utils import *
 import torch
 import numpy as np
 
@@ -15,7 +15,7 @@ class AttachedCameraSensor(Sensor):
     def initialize(self, camera_label, camera_pose, camera_rpy, env_ids=None):
         if env_ids is None: env_ids = range(self.env.num_envs)
 
-        camera_props = gymapi.CameraProperties()
+        camera_props = labapi.CameraProperties()
         camera_props.width = self.env.cfg.perception.image_width
         camera_props.height = self.env.cfg.perception.image_height
         camera_props.horizontal_fov = self.env.cfg.perception.image_horizontal_fov
@@ -28,13 +28,13 @@ class AttachedCameraSensor(Sensor):
             cam = self.env.gym.create_camera_sensor(self.env.envs[env_id], camera_props)
             # initialize camera position
             # attach the camera to the base
-            trans_pos = gymapi.Vec3(camera_pose[0], camera_pose[1], camera_pose[2])
+            trans_pos = labapi.Vec3(camera_pose[0], camera_pose[1], camera_pose[2])
             quat_pitch = quat_from_angle_axis(torch.Tensor([-camera_rpy[1]]), torch.Tensor([0, 1, 0]))[0]
             quat_yaw = quat_from_angle_axis(torch.Tensor([camera_rpy[2]]), torch.Tensor([0, 0, 1]))[0]
             quat = quat_mul(quat_yaw, quat_pitch)
-            trans_quat = gymapi.Quat(quat[0], quat[1], quat[2], quat[3])
-            transform = gymapi.Transform(trans_pos, trans_quat)
-            follow_mode = gymapi.CameraFollowMode.FOLLOW_TRANSFORM
+            trans_quat = labapi.Quat(quat[0], quat[1], quat[2], quat[3])
+            transform = labapi.Transform(trans_pos, trans_quat)
+            follow_mode = labapi.CameraFollowMode.FOLLOW_TRANSFORM
             self.env.gym.attach_camera_to_body(cam, self.env.envs[env_id], 0, transform, follow_mode)
 
             self.cams.append(cam)
@@ -51,7 +51,7 @@ class AttachedCameraSensor(Sensor):
         depth_images = []
         for env_id in env_ids:
             img = self.env.gym.get_camera_image(self.env.sim, self.env.envs[env_id], self.cams[env_id],
-                                            gymapi.IMAGE_DEPTH)
+                                            labapi.IMAGE_DEPTH)
             w, h = img.shape
             depth_images.append(torch.from_numpy(img.reshape([1, w, h])).to(self.env.device))
         depth_images = torch.cat(depth_images, dim=0)
@@ -63,7 +63,7 @@ class AttachedCameraSensor(Sensor):
         rgb_images = []
         for env_id in env_ids:
             img = self.env.gym.get_camera_image(self.env.sim, self.env.envs[env_id], self.cams[env_id],
-                                            gymapi.IMAGE_COLOR)
+                                            labapi.IMAGE_COLOR)
             w, h = img.shape
             rgb_images.append(
                 torch.from_numpy(img.reshape([1, w, h // 4, 4]).astype(np.int32)).to(self.env.device))
@@ -76,7 +76,7 @@ class AttachedCameraSensor(Sensor):
         segmentation_images = []
         for env_id in env_ids:
             img = self.env.gym.get_camera_image(self.env.sim, self.env.envs[env_id], self.cams[env_id],
-                                            gymapi.IMAGE_SEGMENTATION)
+                                            labapi.IMAGE_SEGMENTATION)
             w, h = img.shape
             segmentation_images.append(
                 torch.from_numpy(img.reshape([1, w, h]).astype(np.int32)).to(self.env.device))

@@ -1,6 +1,6 @@
 from .terrain import Terrain
 
-from isaacgym import gymapi
+from isaaclab import labapi
 import torch
 
 class HeightfieldTerrain(Terrain):
@@ -11,7 +11,7 @@ class HeightfieldTerrain(Terrain):
     def prepare(self):
         """ Adds a heightfield terrain to the simulation, sets parameters based on the cfg.
         """
-        hf_params = gymapi.HeightFieldParams()
+        hf_params = labapi.HeightFieldParams()
         hf_params.column_scale = self.env.terrain.cfg.horizontal_scale
         hf_params.row_scale = self.env.terrain.cfg.horizontal_scale
         hf_params.vertical_scale = self.env.terrain.cfg.vertical_scale

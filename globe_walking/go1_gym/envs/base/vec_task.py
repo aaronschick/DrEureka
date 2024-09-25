@@ -34,8 +34,8 @@ from typing import Dict, Any, Tuple, List, Set
 import gym
 from gym import spaces
 
-from isaacgym import gymtorch, gymapi
-from isaacgym.torch_utils import to_torch
+from isaaclab import gymtorch, labapi
+from isaaclab.torch_utils import to_torch
 from globe_walking.go1_gym.utils.dr_utils import get_property_setter_map, get_property_getter_map, \
     get_default_setter_args, apply_random_samples, check_buckets, generate_random_samples, get_last_npercent_elements, NUM_BATCHES
 
@@ -213,9 +213,9 @@ class VecTask(Env):
         # self.sim_params = self.__parse_sim_params(config["physics_engine"], config["sim"])
         self.sim_params = sim_params
         if config["physics_engine"] == "physx":
-            self.physics_engine = gymapi.SIM_PHYSX
+            self.physics_engine = labapi.SIM_PHYSX
         elif config["physics_engine"] == "flex":
-            self.physics_engine = gymapi.SIM_FLEX
+            self.physics_engine = labapi.SIM_FLEX
         else:
             msg = f"Invalid physics engine backend: {config['physics_engine']}"
             raise ValueError(msg)
@@ -224,7 +224,7 @@ class VecTask(Env):
         torch._C._jit_set_profiling_mode(False)
         torch._C._jit_set_profiling_executor(False)
 
-        self.gym = gymapi.acquire_gym()
+        self.gym = labapi.acquire_gym()
 
         self.first_randomization = True
         self.original_props = {}
@@ -258,20 +258,20 @@ class VecTask(Env):
         if self.headless == False:
             # subscribe to keyboard shortcuts
             self.viewer = self.gym.create_viewer(
-                self.sim, gymapi.CameraProperties())
+                self.sim, labapi.CameraProperties())
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_ESCAPE, "QUIT")
+                self.viewer, labapi.KEY_ESCAPE, "QUIT")
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_V, "toggle_viewer_sync")
+                self.viewer, labapi.KEY_V, "toggle_viewer_sync")
 
             # set the camera position based on up axis
             sim_params = self.gym.get_sim_params(self.sim)
-            if sim_params.up_axis == gymapi.UP_AXIS_Z:
-                cam_pos = gymapi.Vec3(20.0, 25.0, 3.0)
-                cam_target = gymapi.Vec3(10.0, 15.0, 0.0)
+            if sim_params.up_axis == labapi.UP_AXIS_Z:
+                cam_pos = labapi.Vec3(20.0, 25.0, 3.0)
+                cam_target = labapi.Vec3(10.0, 15.0, 0.0)
             else:
-                cam_pos = gymapi.Vec3(20.0, 3.0, 25.0)
-                cam_target = gymapi.Vec3(10.0, 0.0, 15.0)
+                cam_pos = labapi.Vec3(20.0, 3.0, 25.0)
+                cam_target = labapi.Vec3(10.0, 0.0, 15.0)
 
             self.gym.viewer_camera_look_at(
                 self.viewer, None, cam_pos, cam_target)
@@ -313,13 +313,13 @@ class VecTask(Env):
         self.privileged_obs_buf = torch.zeros(
             self.num_envs, self.num_privileged_obs, device=self.device, dtype=torch.float)
 
-    def create_sim(self, compute_device: int, graphics_device: int, physics_engine, sim_params: gymapi.SimParams):
+    def create_sim(self, compute_device: int, graphics_device: int, physics_engine, sim_params: labapi.SimParams):
         """Create an Isaac Gym sim object.
 
         Args:
             compute_device: ID of compute device to use.
             graphics_device: ID of graphics device to use.
-            physics_engine: physics engine to use (`gymapi.SIM_PHYSX` or `gymapi.SIM_FLEX`)
+            physics_engine: physics engine to use (`labapi.SIM_PHYSX` or `labapi.SIM_FLEX`)
             sim_params: sim params to use.
         Returns:
             the Isaac Gym sim object.
@@ -479,7 +479,7 @@ class VecTask(Env):
                 img = self.virtual_display.grab()
                 return np.array(img)
 
-    def __parse_sim_params(self, physics_engine: str, config_sim: Dict[str, Any]) -> gymapi.SimParams:
+    def __parse_sim_params(self, physics_engine: str, config_sim: Dict[str, Any]) -> labapi.SimParams:
         """Parse the config dictionary for physics stepping settings.
 
         Args:
@@ -488,7 +488,7 @@ class VecTask(Env):
         Returns
             IsaacGym SimParams object with updated settings.
         """
-        sim_params = gymapi.SimParams()
+        sim_params = labapi.SimParams()
 
         config_sim["up_axis"] = "y" if config_sim["up_axis"] == 0 else "z"  # @willjhliang translation 0/1 to y/z
 
@@ -506,12 +506,12 @@ class VecTask(Env):
 
         # assign up-axis
         if config_sim["up_axis"] == "z":
-            sim_params.up_axis = gymapi.UP_AXIS_Z
+            sim_params.up_axis = labapi.UP_AXIS_Z
         else:
-            sim_params.up_axis = gymapi.UP_AXIS_Y
+            sim_params.up_axis = labapi.UP_AXIS_Y
 
         # assign gravity
-        sim_params.gravity = gymapi.Vec3(*config_sim["gravity"])
+        sim_params.gravity = labapi.Vec3(*config_sim["gravity"])
 
         # configure physics parameters
         if physics_engine == "physx":
@@ -519,7 +519,7 @@ class VecTask(Env):
             if "physx" in config_sim:
                 for opt in config_sim["physx"].keys():
                     if opt == "contact_collection":
-                        setattr(sim_params.physx, opt, gymapi.ContactCollection(config_sim["physx"][opt]))
+                        setattr(sim_params.physx, opt, labapi.ContactCollection(config_sim["physx"][opt]))
                     else:
                         setattr(sim_params.physx, opt, config_sim["physx"][opt])
         else:
@@ -772,8 +772,8 @@ class VecTask(Env):
                         num_bodies = self.gym.get_actor_rigid_body_count(
                             env, handle)
                         for n in range(num_bodies):
-                            self.gym.set_rigid_body_color(env, handle, n, gymapi.MESH_VISUAL,
-                                                          gymapi.Vec3(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
+                            self.gym.set_rigid_body_color(env, handle, n, labapi.MESH_VISUAL,
+                                                          labapi.Vec3(random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
                         continue
 
                     if prop_name == 'scale':

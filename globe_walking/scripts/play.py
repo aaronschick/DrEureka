@@ -1,5 +1,5 @@
-import isaacgym
-assert isaacgym
+import isaaclab
+assert isaaclab
 
 import argparse
 import sys

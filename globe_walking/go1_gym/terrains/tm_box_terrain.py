@@ -1,7 +1,7 @@
 from .terrain import Terrain
 from globe_walking.go1_gym.utils.terrain import perlin
 
-from isaacgym import gymapi
+from isaaclab import labapi
 import numpy as np
 import torch
 import os
@@ -14,7 +14,7 @@ class TMBoxTerrain(Terrain):
     def prepare(self):
         """ Adds a box terrain to the simulation, sets parameters based on the cfg.
         # """
-        from isaacgym import terrain_utils
+        from isaaclab import terrain_utils
 
         self.terrain_cell_bounds = {
             "x_min": torch.zeros(self.env.cfg.terrain.num_rows, self.env.cfg.terrain.num_cols, device=self.env.device),
@@ -86,7 +86,7 @@ class TMBoxTerrain(Terrain):
                 horizontal_scale = self.env.cfg.terrain.horizontal_scale  # / self.env.cfg.terrain.num_rows
                 vertical_scale = self.env.cfg.terrain.vertical_scale  # / self.env.cfg.terrain.num_cols
 
-                tm_params = gymapi.TriangleMeshParams()
+                tm_params = labapi.TriangleMeshParams()
                 vertices, triangles = terrain_utils.convert_heightfield_to_trimesh(heightfield_segment_raw,
                                                                                    horizontal_scale,
                                                                                    vertical_scale,
@@ -274,7 +274,7 @@ class TMBoxTerrain(Terrain):
     def initialize(self):
         """ Adds a box terrain to the simulation, sets parameters based on the cfg.
         # """
-        from isaacgym import terrain_utils
+        from isaaclab import terrain_utils
 
         # texture_files = ['ice_texture.jpg', 'pebble_stone_texture_nature.jpg', 'particle_board_paint_aged.jpg', 'texture_stone_stone_texture_0.jpg', 'texture_wood_brown_1033760.jpg', 'brick_texture.jpg']
 
@@ -307,7 +307,7 @@ class TMBoxTerrain(Terrain):
                 # x, y = np.meshgrid(lin_x, lin_y)
                 # heightfield_segment_raw = heightfield_segment_raw + perlin(x, y, seed=2) * float(roughness) / self.env.cfg.terrain.vertical_scale
 
-                tm_params = gymapi.TriangleMeshParams()
+                tm_params = labapi.TriangleMeshParams()
                 vertices, triangles = terrain_utils.convert_heightfield_to_trimesh(heightfield_segment_raw,
                                                                                    horizontal_scale,
                                                                                    vertical_scale,

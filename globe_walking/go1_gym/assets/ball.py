@@ -1,6 +1,6 @@
 from globe_walking.go1_gym.assets.asset import Asset
-from isaacgym.torch_utils import *
-from isaacgym import gymapi
+from isaaclab.torch_utils import *
+from isaaclab import labapi
 
 
 class Ball(Asset):
@@ -12,7 +12,7 @@ class Ball(Asset):
     def initialize(self):
         # ball_radius = self.env.cfg.ball.radius
         ball_radius = self.radius
-        asset_options = gymapi.AssetOptions()
+        asset_options = labapi.AssetOptions()
         asset = self.env.gym.create_sphere(self.env.sim, ball_radius,
                                            asset_options)
         rigid_shape_props = self.env.gym.get_asset_rigid_shape_properties(

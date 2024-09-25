@@ -1,6 +1,6 @@
 from .terrain import Terrain
 
-from isaacgym import gymapi
+from isaaclab import labapi
 import torch
 
 class TrimeshTerrain(Terrain):
@@ -11,7 +11,7 @@ class TrimeshTerrain(Terrain):
     def prepare(self):
         """ Adds a triangle mesh terrain to the simulation, sets parameters based on the cfg.
         # """
-        tm_params = gymapi.TriangleMeshParams()
+        tm_params = labapi.TriangleMeshParams()
         tm_params.nb_vertices = self.env.terrain.vertices.shape[0]
         tm_params.nb_triangles = self.env.terrain.triangles.shape[0]
 

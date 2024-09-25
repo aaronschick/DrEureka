@@ -3,7 +3,7 @@ from .robot import Robot
 from globe_walking.go1_gym import MINI_GYM_ROOT_DIR
 import os
 
-from isaacgym import gymapi
+from isaaclab import labapi
 
 class Go1(Robot):
     def __init__(self, env):
@@ -17,7 +17,7 @@ class Go1(Robot):
 
         asset_config = self.env.cfg.asset
 
-        asset_options = gymapi.AssetOptions()
+        asset_options = labapi.AssetOptions()
         asset_options.default_dof_drive_mode = asset_config.default_dof_drive_mode
         asset_options.collapse_fixed_joints = asset_config.collapse_fixed_joints
         asset_options.replace_cylinder_with_capsule = asset_config.replace_cylinder_with_capsule
@@ -32,7 +32,7 @@ class Go1(Robot):
         asset_options.thickness = asset_config.thickness
         asset_options.disable_gravity = asset_config.disable_gravity
         asset_options.vhacd_enabled = True
-        asset_options.vhacd_params = gymapi.VhacdParams()
+        asset_options.vhacd_params = labapi.VhacdParams()
         asset_options.vhacd_params.resolution = 500000
 
         asset = self.env.gym.load_asset(self.env.sim, asset_root, asset_file, asset_options)
